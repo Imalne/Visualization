@@ -22,7 +22,7 @@ function SeriesPoint(data){
 
         },
         itemStyle: {
-            color: color[data["position"][2]]
+            color: "red"
         },
         data: [{
             name: data["name"],

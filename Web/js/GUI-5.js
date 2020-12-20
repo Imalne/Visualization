@@ -176,42 +176,35 @@ function initGeoMapShow(seriesList){
             let regionData = normalRegion(params["name"]);
             option.series[0].data=regionData;
             myChart.setOption(option, true);
-            showPredict(params.name)
+            getPredictionData(params["name"]);
         })
         console.log(option)
     }
 }
 
 
-function showPredict(inputRegionName){
-    let level = selected_level;
-    if( level === selected_levels[0]){
-        showLinePrediction({name:"country"});
-    }
-    else if( level === selected_levels[1]){
-        showLinePrediction({name: "region "+ regionDistribution[inputRegionName]});
-    }
-    else {
-        showLinePrediction({name: inputRegionName});
-    }
+function showPredict(inputRegionName, data){
+    if (inputRegionName == "")
+        inputRegionName="全国";
+    showLinePrediction(inputRegionName, data);
 }
 
-function showLinePrediction(lineData){
+function showLinePrediction(name,lineData){
     let lineChart = echarts.init(document.getElementById("line_chart"));
     lineChart.clear()
     let option = {
         title: {
-            text: lineData["name"]
+            text: name
         },
         xAxis: {
             type: 'category',
-            data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+            data: lineData.x,//横坐标的list， 字符串list， 例如 ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
         },
         yAxis: {
             type: 'value'
         },
         series: [{
-            data: [820, 932, 901, 934, 1290, 1330, 1320],
+            data: lineData.y, //纵坐标list，例如[820, 932, 901, 934, 1290, 1330, 1320],
             type: 'line'
         }]
     };
@@ -224,4 +217,44 @@ var count = 1;
 function init(){
     initGeoMapShow([]);
     // showLinePrediction([])
+}
+
+function queryRegion(regionName){
+    if( selected_level === "country"){
+        return "";
+    }
+    else if(selected_level === "region"){
+        return regionNames[regionDistribution[regionName]];
+    }
+    else
+        return regionName;
+}
+
+
+function getPredictionData(regionName){
+    $.ajax({
+        type: "GET",
+        url: 'http://localhost:8000/', //url
+        dataType: 'json',
+        crossDomain:true,
+        data: {
+            query_area: queryRegion(regionName), //全国预测输入为空，大区则输入为大区名字，省份预测则为省份名字
+        },//
+        complete: function (data) {  //将这里的complete改为success
+            console.log(data)
+            let lineData = data;
+            //需要将data处理为Linedata的样式
+            // LineData样式：
+            // {
+            //     x:[], //横坐标值的list， 字符串list
+            //     y:[]  //纵坐标值的list， 数值list
+            // }
+            lineData={
+                x:['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                y:[820, 932, 901, 934, 1290, 1330, 1320]
+            }
+
+            showPredict(queryRegion(regionName), lineData)
+        }
+    });
 }
